@@ -26,6 +26,7 @@ from ...model import load_model, load_tokenizer
 from ..trainer_utils import create_modelcard_and_push
 from .metric import ComputeAccuracy, ComputeSimilarity, eval_logit_processor
 from .trainer import CustomSeq2SeqTrainer
+from ...eval.callback_adapters import BoundingBoxEvaluatorCallback
 
 
 if TYPE_CHECKING:
@@ -90,6 +91,9 @@ def run_sft(
         **tokenizer_module,
         **metric_module,
     )
+
+
+
 
     # Training
     if training_args.do_train:

@@ -714,5 +714,14 @@
       "prompt": "content"
     },
     "folder": "python"
+  },
+
+  "hd-epic-bbox": {
+  "file_name": "/data/LLAMA-factory/hd_epic_eval.json",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "conversations",
+    "videos": "videos"
   }
+}
 }

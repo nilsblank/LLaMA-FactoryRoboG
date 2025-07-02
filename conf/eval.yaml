@@ -1,0 +1,19 @@
+# Prediction file to evaluate
+predictions_file: ${hydra:runtime.cwd}/predictions.jsonl
+
+# Output file for results (optional)
+output_file: ${hydra:runtime.cwd}/eval_results.json
+
+# List of evaluators to run
+evaluators:
+  - _target_: llamafactory.eval.evaluators.BoundingBoxEvaluator
+    ground_truth_file: ${hydra:runtime.cwd}/data/bbox_ground_truth.jsonl
+    name: BoundingBoxMAP
+
+  - _target_: llamafactory.eval.evaluators.PointEvaluator
+    mask_dir: ${hydra:runtime.cwd}/data/masks
+    name: PointAccuracy
+    verbose: true
+
+# Override example for specific evaluator configurations:
+# python run_eval.py evaluators.0.ground_truth_file=/path/to/other/gt.jsonl
