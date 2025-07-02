@@ -1,5 +1,7 @@
+import torch
 import wandb
 from transformers import TrainerCallback
+from transformers.integrations import WandbCallback
 from typing import Optional, List, Dict, Any
 
 
@@ -42,25 +44,41 @@ class EvaluatorCallback(TrainerCallback):
     def on_evaluate(self, args, state, control, **kwargs):
         """Run evaluation during training."""
         # Get model predictions and decode them
-        predictions = self.trainer.predict(self.val_dataset)
-        pred_texts = decode_predictions(self.tokenizer, predictions)
+        
+        if self.trainer.latest_predictions is not None:
+            predictions = self.trainer.latest_predictions
+            pred_texts = self.tokenizer.batch_decode(
+                predictions, skip_special_tokens=True
+            )
+        else:
+            predictions = self.trainer.predict(self.val_dataset)
+            pred_texts = decode_predictions(self.tokenizer, predictions)
         
         # Run evaluation
         result = self.evaluator.evaluate(pred_texts)
+        log_dict = {}
         
-        # Log main metric (use first numeric result as primary metric)
-        primary_metric = None
-        for key, value in result.items():
-            if isinstance(value, (int, float)) and not isinstance(value, bool) and primary_metric is None:
-                primary_metric = (key, value)
-                break
+        for key in result:
+            
+            value = result[key]
+            
+            if torch.distributed.is_available() and torch.distributed.is_initialized():
+                value_tensor = torch.tensor([value], device="cuda")
+                gathered = [torch.zeros_like(value_tensor) for _ in range(torch.distributed.get_world_size())]
+                torch.distributed.all_gather(gathered, value_tensor)
+                value = torch.stack(gathered).mean().item()
+            log_dict[f"eval/{key}"] = value
         
-        if primary_metric:
-            metric_name, metric_value = primary_metric
-            self.trainer.log_metrics({self.name: metric_value})
-            wandb.log({f"validate/{self.name}": metric_value}, step=state.global_step)
+        # Log results
+        if self.trainer.is_world_process_zero():
+            for key, value in log_dict.items():
+                log_name = f"{self.name}_{key}"
+                self.trainer.log_metrics("eval",{log_name: value})
+            
+            #get wandb instance from trainer
+            self.trainer.callback_handler.callbacks[1]._wandb.log(log_dict, step=state.global_step)
+            wandb.log(log_dict)
         
-        return result
 
 
 # Import evaluators here rather than at the top to avoid circular imports
@@ -93,11 +111,12 @@ class BoundingBoxEvaluatorCallback(EvaluatorCallback):
         result = super().on_evaluate(args, state, control, **kwargs)
         
         # Specifically log MAP score for bounding box evaluation
-        if "map" in result:
-            self.trainer.log_metrics({self.name: result["map"]})
-            wandb.log({f"validate/{self.name}": result["map"]}, step=state.global_step)
         
-        return result
+        # if "map" in result:
+        #     if self.trainer.is_world_process_zero():
+        #         self.trainer.log_metrics({self.name: result["map"]})
+        #         wandb.log({f"validate/{self.name}": result["map"]}, step=state.global_step)
+        
 
 
 class PointEvaluatorCallback(EvaluatorCallback):
@@ -137,4 +156,3 @@ class PointEvaluatorCallback(EvaluatorCallback):
             self.trainer.log_metrics({self.name: result["accuracy"]})
             wandb.log({f"validate/{self.name}": result["accuracy"]}, step=state.global_step)
         
-        return result

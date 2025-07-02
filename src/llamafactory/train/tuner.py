@@ -12,10 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import os
+from pathlib import Path
 import shutil
+import sys
 from typing import TYPE_CHECKING, Any, Optional
 
+from omegaconf import OmegaConf
 import torch
 import torch.distributed as dist
 from transformers import EarlyStoppingCallback, PreTrainedModel
@@ -25,7 +29,7 @@ from ..extras import logging
 from ..extras.constants import V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
 from ..extras.misc import infer_optim_dtype
 from ..extras.packages import is_ray_available
-from ..hparams import get_infer_args, get_ray_args, get_train_args, read_args
+from ..hparams import get_infer_args, get_ray_args, get_train_args #read_args
 from ..model import load_model, load_tokenizer
 from .callbacks import LogCallback, PissaConvertCallback, ReporterCallback
 from .dpo import run_dpo
@@ -52,6 +56,9 @@ logger = logging.get_logger(__name__)
 def _training_function(config: dict[str, Any]) -> None:
     args = config.get("args")
     callbacks: list[Any] = config.get("callbacks")
+    
+    evaluators = args.pop("evaluators", None)
+    custom_args = {"evaluators": evaluators} if evaluators is not None else {}
     model_args, data_args, training_args, finetuning_args, generating_args = get_train_args(args)
 
     callbacks.append(LogCallback())
@@ -69,7 +76,7 @@ def _training_function(config: dict[str, Any]) -> None:
     if finetuning_args.stage == "pt":
         run_pt(model_args, data_args, training_args, finetuning_args, callbacks)
     elif finetuning_args.stage == "sft":
-        run_sft(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
+        run_sft(model_args, data_args, training_args, finetuning_args, generating_args, custom_args, callbacks)
     elif finetuning_args.stage == "rm":
         run_rm(model_args, data_args, training_args, finetuning_args, callbacks)
     elif finetuning_args.stage == "ppo":
@@ -90,7 +97,25 @@ def _training_function(config: dict[str, Any]) -> None:
     except Exception as e:
         logger.warning(f"Failed to destroy process group: {e}.")
 
+def read_args(args):
+    r"""Get arguments from the command line or a config file."""
+    if args is not None:
+        return args
 
+    if sys.argv[1].endswith(".yaml") or sys.argv[1].endswith(".yml"):
+        override_config = OmegaConf.from_cli(sys.argv[2:])
+        dict_config = OmegaConf.load(sys.argv[1])  
+
+        merged_config = OmegaConf.merge(dict_config, override_config)
+        return OmegaConf.to_container(merged_config, resolve=True)
+    elif sys.argv[1].endswith(".json"):
+        override_config = OmegaConf.from_cli(sys.argv[2:])
+        dict_config = json.loads(Path(sys.argv[1]).absolute().read_text())
+        return OmegaConf.to_container(OmegaConf.merge(dict_config, override_config))
+    else:
+        return sys.argv[1:]
+    
+    
 def run_exp(args: Optional[dict[str, Any]] = None, callbacks: Optional[list["TrainerCallback"]] = None) -> None:
     args = read_args(args)
     if "-h" in args or "--help" in args:

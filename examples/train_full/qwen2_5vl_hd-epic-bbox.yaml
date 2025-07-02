@@ -11,7 +11,7 @@ finetuning_type: full
 freeze_vision_tower: true
 freeze_multi_modal_projector: true
 freeze_language_model: false
-deepspeed: examples/deepspeed/ds_z3_config.json
+#deepspeed: examples/deepspeed/ds_z3_config.json
 
 ### dataset
 dataset: hd-epic-bbox
@@ -23,13 +23,14 @@ preprocessing_num_workers: 16
 dataloader_num_workers: 4
 
 ### output
-output_dir: saves/qwen2_5vl-3b/full/sft
+output_dir: saves/qwen2_5vl-3b/full/sft/$
 logging_steps: 10
 save_steps: 500
 plot_loss: true
 overwrite_output_dir: true
 save_only_model: false
-report_to: wandb  # choices: [none, wandb, tensorboard, swanlab, mlflow]
+report_to: wandb
+run_name: ${model_name_or_path}_${dataset}_${stage}
 
 ### train
 per_device_train_batch_size: 1
@@ -42,8 +43,22 @@ bf16: true
 ddp_timeout: 180000000
 resume_from_checkpoint: null
 
+##optimizations
+flash_attn: fa2
+use_unsloth: true
+optim: adamw_bnb_8bit
+pure_bf16: true
+
+
+evaluators:
+  - bbox_evaluator
+
+tokenized_path: /data/LLAMA-factory/hd-epic/tokenized_gen=${predict_with_generate}
+
 ### eval
-# val_size: 0.1
-# per_device_eval_batch_size: 1
-# eval_strategy: steps
-# eval_steps: 500
+#val_size: 0.1
+per_device_eval_batch_size: 1
+eval_strategy: steps
+eval_steps: 500
+eval_dataset: hd-epic-bbox
+predict_with_generate: true

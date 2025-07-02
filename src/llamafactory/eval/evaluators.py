@@ -74,35 +74,58 @@ class BoundingBoxEvaluator(BaseEvaluator):
         if self.ground_truths is None and self.ground_truth_file:
             with open(self.ground_truth_file, 'r') as f:
                 self.ground_truths = [json.loads(line) for line in f]
+        
+        #Parse gt boxes from ground truths
+        parsed = []
+        for gt in self.ground_truths:
+            gt_boxes = self.parse_bbox_from_text(gt)
+            parsed.append(gt_boxes)
+        self.ground_truths = parsed
+        
+            
     
     @staticmethod
     def parse_bbox_from_text(text: str) -> List[List[float]]:
         """
-        Parse bounding box coordinates from prediction text.
-        Expected format: "x1,y1,x2,y2; x1,y1,x2,y2; ..."
+        Parse bounding box coordinates from prediction text Qwen Format.
+        Expected format: "'```json\n[\n\t{"label": "orange", "bbox_2d": [68, 102, 97, 131]}\n]\n```'
         
         Args:
-            text: String containing bounding box coordinates
+            text: String containing prediction
             
         Returns:
-            List of bounding box coordinates [x1, y1, x2, y2]
+            List of bounding boxes as [x1, y1, x2, y2]
         """
-        box_list = []
-        if not text:
-            return box_list
+        boxes = []
+        try:
+            # Remove the code block markers and parse JSON
+            json_str = text.strip().replace("```json", "").replace("```", "").strip()
+            bbox_data = json.loads(json_str)
             
-        for box_str in text.split(';'):
-            box_str = box_str.strip()
-            if box_str:  # Skip empty parts
-                try:
-                    # Convert string coordinates to floats
-                    coords = [float(x) for x in box_str.split(',')]
-                    if len(coords) == 4:  # Ensure we have 4 coordinates
-                        box_list.append(coords)
-                except (ValueError, IndexError):
-                    continue
+            boxes = []
+            for item in bbox_data:
+                if "bbox_2d" in item:
+                    box = item["bbox_2d"]
+                    if len(box) == 4:
+                        boxes.append(box)
+            return boxes
+        except json.JSONDecodeError as e:
+            #fallback, try to parse from bbox_2d
+            pattern = r'bbox_2d"\s*:\s*\[(.*?)\]'
+            matches = re.findall(pattern, text)
+            if matches:
+                boxes = []
+                for match in matches:
+                    coords = match.split(',')
+                    if len(coords) == 4:
+                        try:
+                            box = [int(coord.strip()) for coord in coords]
+                            boxes.append(box)
+                        except ValueError:
+                            continue
+                return boxes
+            
         
-        return box_list
     
     def evaluate(self, predictions: List[Union[str, Dict[str, Any]]]) -> Dict[str, float]:
         """
@@ -145,7 +168,7 @@ class BoundingBoxEvaluator(BaseEvaluator):
             pred_list.append(pred_dict)
             
             # Process ground truth
-            gt_boxes = target.get("boxes", [])
+            gt_boxes = target
             gt_boxes = torch.tensor(gt_boxes) if len(gt_boxes) > 0 else torch.empty((0, 4))
             
             target_dict = {

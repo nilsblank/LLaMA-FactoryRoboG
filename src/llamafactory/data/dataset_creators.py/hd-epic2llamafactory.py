@@ -6,13 +6,14 @@ import json
 import pickle
 import cv2
 from multiprocessing import Pool, cpu_count
+import numpy as np
 from tqdm import tqdm
 
 TEMPLATE = {
         "messages": [
             {
-                "content": '''Given the video, determine the object the human interacted with. Output the label and coordinates of the object in the first frame in JSON format.''',
-            "role": "user"
+                "content": '''<video> Given the video, determine the object the human interacted with. Output the label and coordinates of the object in the first frame in JSON format.''',
+                "role": "user"
             },
             {
                 "content": "",
@@ -89,6 +90,7 @@ def create_hd_epic_dataset(annotations_file,dataset_name, out_dir):
 
     train_json_out_path = os.path.join(out_dir, f"{dataset_name}_train.json")
     eval_json_out_path = os.path.join(out_dir, f"{dataset_name}_eval.json")
+    debug_path = os.path.join(out_dir, f"{dataset_name}_debug.json")
 
 
     eval_data = []
@@ -121,6 +123,10 @@ def create_hd_epic_dataset(annotations_file,dataset_name, out_dir):
         json.dump(train_data, f, indent=4)
     with open(eval_json_out_path, "w") as f:
         json.dump(eval_data, f, indent=4)
+        
+    
+    with open(debug_path, "w") as f:
+        json.dump(np.random.choice(train_data, size=32, replace=False).tolist(), f, indent=4)
 
 if __name__ == "__main__":
     annotations_file = "/data/hd-epic/HD-EPIC/processed_annotations_boxes.json"

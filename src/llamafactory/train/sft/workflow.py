@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 from typing import TYPE_CHECKING, Optional
 
 from ...data import SFTDataCollatorWith4DAttentionMask, get_dataset, get_template_and_fix_tokenizer
@@ -44,6 +45,7 @@ def run_sft(
     training_args: "Seq2SeqTrainingArguments",
     finetuning_args: "FinetuningArguments",
     generating_args: "GeneratingArguments",
+    custom_args = None,
     callbacks: Optional[list["TrainerCallback"]] = None,
 ):
     tokenizer_module = load_tokenizer(model_args)
@@ -93,9 +95,34 @@ def run_sft(
     )
 
 
-
-
-    # Training
+    # Add evaluation callback for bounding box tasks
+    eval_tokenizer = copy.deepcopy(tokenizer)
+    eval_tokenizer.padding_side = "left"  # use right-padding in evaluation
+    
+    
+    #decode val dataset
+    ground_truths = []
+    for example in dataset_module["eval_dataset"]:
+        ground_truths.append(example["labels"])
+    
+    ground_truths_decoded = eval_tokenizer.batch_decode(
+        ground_truths, skip_special_tokens=True, clean_up_tokenization_spaces=True
+    )
+    
+    if custom_args is not None:
+        for evaluator in custom_args.get("evaluators", []):
+            if evaluator == "bbox_evaluator":
+                trainer.add_callback(
+                    BoundingBoxEvaluatorCallback(
+                        trainer=trainer,
+                        tokenizer=eval_tokenizer,
+                        val_dataset=ground_truths_decoded,
+                    )
+                )
+                # Training
+                metrics = trainer.evaluate(metric_key_prefix="eval", **gen_kwargs)
+                trainer.log_metrics("eval", metrics)
+                trainer.save_metrics("eval", metrics)
     if training_args.do_train:
         train_result = trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
         trainer.save_model()

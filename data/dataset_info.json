@@ -717,11 +717,17 @@
   },
 
   "hd-epic-bbox": {
-  "file_name": "/data/LLAMA-factory/hd_epic_eval.json",
+  "file_name": "/data/LLAMA-factory/hd_epic_debug.json",
   "formatting": "sharegpt",
   "columns": {
-    "messages": "conversations",
+    "messages": "messages",
     "videos": "videos"
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
   }
 }
 }
