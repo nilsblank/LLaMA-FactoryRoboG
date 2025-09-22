@@ -46,7 +46,7 @@ def vllm_infer(
     temperature: float = 0.95,
     top_p: float = 0.7,
     top_k: int = 50,
-    max_new_tokens: int = 1024,
+    max_new_tokens: int = 128,
     repetition_penalty: float = 1.0,
     skip_special_tokens: bool = True,
     default_system: Optional[str] = None,
@@ -55,9 +55,9 @@ def vllm_infer(
     pipeline_parallel_size: int = 1,
     image_max_pixels: int = 768 * 768,
     image_min_pixels: int = 32 * 32,
-    video_fps: float = 2.0,
+    video_fps: float = 30,
     video_maxlen: int = 128,
-    batch_size: int = 1024,
+    batch_size: int = 16,
 ):
     r"""Perform batch generation using vLLM engine, which supports tensor parallelism.
 
@@ -196,4 +196,8 @@ def vllm_infer(
 
 
 if __name__ == "__main__":
+
+
+
+
     fire.Fire(vllm_infer)

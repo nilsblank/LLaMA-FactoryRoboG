@@ -6,6 +6,7 @@ import re
 from PIL import Image
 from pathlib import Path
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
+from torchmetrics.detection.iou import IntersectionOverUnion
 from typing import List, Dict, Any, Union, Optional, Tuple
 
 
@@ -68,6 +69,9 @@ class BoundingBoxEvaluator(BaseEvaluator):
         super().__init__(name=name or "BoundingBoxMAP")
         self.ground_truth_file = ground_truth_file
         self.ground_truths = ground_truths
+        
+        self.load_data()
+
     
     def load_data(self):
         """Load ground truth data if not provided directly."""
@@ -98,18 +102,24 @@ class BoundingBoxEvaluator(BaseEvaluator):
         """
         boxes = []
         try:
-            # Remove the code block markers and parse JSON
-            json_str = text.strip().replace("```json", "").replace("```", "").strip()
+            #find everythin between ``` json and ```, allwoing newlines
+            pattern = r'```json\s*([\s\S]*?)```'
+            matches = re.findall(pattern, text)
+            json_str = matches[0] if matches else None
+
+            ## Remove the code block markers and parse JSON
+            #json_str = text.strip().replace("```json", "").replace("```", "").strip()
+            
             bbox_data = json.loads(json_str)
             
-            boxes = []
+             # Initialize with empty box
             for item in bbox_data:
                 if "bbox_2d" in item:
                     box = item["bbox_2d"]
                     if len(box) == 4:
                         boxes.append(box)
-            return boxes
-        except json.JSONDecodeError as e:
+        except Exception as e:
+            print(text)
             #fallback, try to parse from bbox_2d
             pattern = r'bbox_2d"\s*:\s*\[(.*?)\]'
             matches = re.findall(pattern, text)
@@ -123,8 +133,11 @@ class BoundingBoxEvaluator(BaseEvaluator):
                             boxes.append(box)
                         except ValueError:
                             continue
-                return boxes
-            
+                        
+        if len(boxes) == 0:
+            boxes = [np.zeros((4), dtype=int)]  # Return empty box if no valid boxes found
+        
+        return boxes
         
     
     def evaluate(self, predictions: List[Union[str, Dict[str, Any]]]) -> Dict[str, float]:
@@ -138,7 +151,6 @@ class BoundingBoxEvaluator(BaseEvaluator):
             Dictionary with MAP metrics
         """
         # Load ground truth data if needed
-        self.load_data()
         
         if not self.ground_truths:
             raise ValueError("No ground truth data available. Provide either ground_truths or ground_truth_file.")
@@ -178,9 +190,23 @@ class BoundingBoxEvaluator(BaseEvaluator):
             target_list.append(target_dict)
         
         # Calculate MAP
-        metric = MeanAveragePrecision()
+        metric = MeanAveragePrecision(
+            
+          compute_on_cpu=False, 
+          sync_on_compute=False,
+          dist_sync_on_step=True,)
         metric.update(pred_list, target_list)
         result = metric.compute()
+        
+        metric_iou = IntersectionOverUnion(
+            compute_on_cpu=False,
+            sync_on_compute=False,
+            dist_sync_on_step=True,
+        )
+        metric_iou.update(pred_list, target_list)
+        iou_result = metric_iou.compute()
+        # Combine results
+        result.update(iou_result)
         
         return {k: v.item() for k, v in result.items()}
 

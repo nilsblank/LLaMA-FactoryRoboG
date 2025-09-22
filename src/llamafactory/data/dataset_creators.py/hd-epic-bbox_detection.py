@@ -8,11 +8,12 @@ from multiprocessing import Pool, cpu_count
 import av
 import numpy as np
 from tqdm import tqdm
+from PIL import Image
 
 TEMPLATE = {
         "messages": [
             {
-                "content": '''<video> Given the video, determine the object the human interacted with. Output the label and coordinates of the object in the first frame in JSON format.''',
+                "content": '''Locate the OBJECT_NAME and output its coordinates in JSON format.<image>''',
                 "role": "user"
             },
             {
@@ -20,8 +21,7 @@ TEMPLATE = {
                 "role": "assistant"
             },
         ],
-        "videos": [
-        ]
+        "images": []
     }
 
 
@@ -105,11 +105,15 @@ def create_hd_epic_dataset(annotations_file,dataset_name, out_dir):
 
     eval_size = 128
     
+    #filter annotations
+    annotations = {k: v for k, v in annotations.items() if "skipped" not in v["name"].lower() and len(v["bboxes"]) > 0}
+    
     eval_indices = np.random.choice(list(annotations.keys()), size=eval_size, replace=False)
     idx = 0
     for track_id, video_data in tqdm(annotations.items(), desc="Processing videos"):
         
-
+        if "skipped" in video_data["name"].lower():
+            continue
         cur_data = copy.deepcopy(TEMPLATE)
         cur_data["videos"] =  [ "/home/blank" + video_data["video_path"]]
         first_frame_save_dir = cur_data["videos"][0].replace(".mp4", "_first_frame.jpg")
@@ -120,25 +124,33 @@ def create_hd_epic_dataset(annotations_file,dataset_name, out_dir):
             container = av.open(cur_data["videos"][0], "r")
             video_stream = next(stream for stream in container.streams if stream.type == "video")
             #get first 
-            
-            first_frame = next(container.decode(video=video_stream))
-            first_frame_pil = first_frame.to_image()
-            first_frame_pil.save(first_frame_save_dir)
-            
             if video_stream is None:
                 print(f"No video stream found in {cur_data['videos'][0]}")
                 continue
+            if not os.path.exists(first_frame_save_dir):
+                for frame in container.decode(container.streams.video[0]):
+                    first_frame = frame
+                    break
+
+
+                frame = Image.fromarray(first_frame.to_ndarray(format="rgb24"))
+                frame.save(first_frame_save_dir)
+            else:
+                frame = Image.open(first_frame_save_dir)
+            
         except Exception as e:
             print(f"Error opening video {cur_data['videos'][0]}: {e}")
             continue
+        
         initial_position = video_data["bboxes"][0]
 
         initial_position = [int(value) for value in initial_position]
-        initial_position = convert_to_qwen25vl_format(initial_position, 1408, 1408)
+        initial_position = convert_to_qwen25vl_format(initial_position, frame.height, frame.width)
 
         obj_name = video_data["name"]
         label = bbox_format.replace("BBOX_COORDS", str(initial_position)).replace("OBJECT_NAME", obj_name)
         cur_data["messages"][1]["content"] = label
+        cur_data["messages"][0]["content"] = cur_data["messages"][0]["content"].replace("OBJECT_NAME", obj_name)
 
         kitchen = video_data["video_path"].split("/")[5]
         
@@ -171,7 +183,7 @@ def create_hd_epic_dataset(annotations_file,dataset_name, out_dir):
 
 if __name__ == "__main__":
     annotations_file = "/home/blank/data/hd-epic/HD-EPIC/processed_annotations_boxes.json"
-    dataset_name = "hd_epic"
+    dataset_name = "hd_epic_detection"
     out_dir = "/home/blank/data/LLAMA-factory/"
 
     create_hd_epic_dataset(annotations_file, dataset_name, out_dir)

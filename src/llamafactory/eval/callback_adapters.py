@@ -47,6 +47,7 @@ class EvaluatorCallback(TrainerCallback):
         
         if self.trainer.latest_predictions is not None:
             predictions = self.trainer.latest_predictions
+            predictions[predictions == -100] = self.tokenizer.pad_token_id
             pred_texts = self.tokenizer.batch_decode(
                 predictions, skip_special_tokens=True
             )
@@ -65,8 +66,10 @@ class EvaluatorCallback(TrainerCallback):
             if torch.distributed.is_available() and torch.distributed.is_initialized():
                 value_tensor = torch.tensor([value], device="cuda")
                 gathered = [torch.zeros_like(value_tensor) for _ in range(torch.distributed.get_world_size())]
+                #print(gathered)
                 torch.distributed.all_gather(gathered, value_tensor)
-                value = torch.stack(gathered).mean().item()
+                #print("Gathered values:", gathered)
+                value = torch.stack(gathered).float().mean().item()
             log_dict[f"eval/{key}"] = value
         
         # Log results

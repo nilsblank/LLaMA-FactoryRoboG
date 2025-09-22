@@ -30,6 +30,10 @@ from .trainer import CustomSeq2SeqTrainer
 from ...eval.callback_adapters import BoundingBoxEvaluatorCallback
 
 
+from transformers.models.qwen2_vl import Qwen2VLForConditionalGeneration
+
+from transformers.models.qwen2_vl import image_processing_qwen2_vl_fast
+
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments, TrainerCallback
 
@@ -38,6 +42,13 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
+
+import logging
+class SuppressQwen2VLWarning(logging.Filter):
+    def filter(self, record):
+        return "`Qwen2VLImageProcessorFast` works only with image inputs" not in record.getMessage()
+
+logger.addFilter(SuppressQwen2VLWarning())
 
 def run_sft(
     model_args: "ModelArguments",
@@ -120,9 +131,10 @@ def run_sft(
                     )
                 )
                 # Training
-                metrics = trainer.evaluate(metric_key_prefix="eval", **gen_kwargs)
-                trainer.log_metrics("eval", metrics)
-                trainer.save_metrics("eval", metrics)
+                # if training_args.do_train:
+                # metrics = trainer.evaluate(metric_key_prefix="eval", **gen_kwargs)
+                # trainer.log_metrics("eval", metrics)
+                # trainer.save_metrics("eval", metrics)
     if training_args.do_train:
         train_result = trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
         trainer.save_model()

@@ -8,11 +8,12 @@ from multiprocessing import Pool, cpu_count
 import av
 import numpy as np
 from tqdm import tqdm
+from PIL import Image
 
 TEMPLATE = {
         "messages": [
             {
-                "content": '''<video> Given the video, determine the object the human interacted with. Output the label and coordinates of the object in the first frame in JSON format.''',
+                "content": '''<image><video> Given the video, determine the object the human interacted with. Output the label and location of the interacted object in the provided frame in JSON format.''',
                 "role": "user"
             },
             {
@@ -21,7 +22,8 @@ TEMPLATE = {
             },
         ],
         "videos": [
-        ]
+        ],
+        "images": []
     }
 
 
@@ -88,9 +90,9 @@ def create_hd_epic_dataset(annotations_file,dataset_name, out_dir):
 
     eval_kitchen = "P07"
 
-    train_json_out_path = os.path.join(out_dir, f"{dataset_name}_train.json")
-    eval_json_out_path = os.path.join(out_dir, f"{dataset_name}_eval.json")
-    debug_path = os.path.join(out_dir, f"{dataset_name}_debug.json")
+    train_json_out_path = os.path.join(out_dir, f"{dataset_name}_first_frame_train.json")
+    eval_json_out_path = os.path.join(out_dir, f"{dataset_name}_first_frame_eval.json")
+    debug_path = os.path.join(out_dir, f"{dataset_name}_first_frame_debug.json")
 
 
     eval_data = []
@@ -120,14 +122,18 @@ def create_hd_epic_dataset(annotations_file,dataset_name, out_dir):
             container = av.open(cur_data["videos"][0], "r")
             video_stream = next(stream for stream in container.streams if stream.type == "video")
             #get first 
-            
-            first_frame = next(container.decode(video=video_stream))
-            first_frame_pil = first_frame.to_image()
-            first_frame_pil.save(first_frame_save_dir)
-            
             if video_stream is None:
                 print(f"No video stream found in {cur_data['videos'][0]}")
                 continue
+            for frame in container.decode(container.streams.video[0]):
+                first_frame = frame
+                break
+
+
+            frame = Image.fromarray(first_frame.to_ndarray(format="rgb24"))
+            frame.save(first_frame_save_dir)
+        
+            
         except Exception as e:
             print(f"Error opening video {cur_data['videos'][0]}: {e}")
             continue

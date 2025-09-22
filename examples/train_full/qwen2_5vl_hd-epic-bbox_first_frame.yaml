@@ -14,7 +14,7 @@ freeze_language_model: false
 #deepspeed: examples/deepspeed/ds_z3_config.json
 
 ### dataset
-dataset: hd-epic-bbox_train
+dataset: hd-epic-bbox_first_frame_train
 template: qwen2_vl
 cutoff_len: 2048
 #max_samples: 1000
@@ -23,7 +23,7 @@ preprocessing_num_workers: 16
 dataloader_num_workers: 4
 
 ### output
-output_dir: saves/qwen2_5vl-3b/full/sft/$
+output_dir: saves/qwen2_5vl-3b/full/sft/${dataset}
 logging_steps: 10
 save_steps: 400
 plot_loss: true
@@ -53,12 +53,12 @@ pure_bf16: true
 evaluators:
   - bbox_evaluator
 
-tokenized_path: /home/blank/data/LLAMA-factory/hd-epic/tokenized_gen_${predict_with_generate}
+tokenized_path: /home/blank/data/LLAMA-factory/${dataset}/tokenized_gen_${predict_with_generate}
 
 ### eval
 #val_size: 0.1
-per_device_eval_batch_size: 1
+per_device_eval_batch_size: 8
 eval_strategy: steps
 eval_steps: 100
-eval_dataset: hd-epic-bbox_eval
+eval_dataset: hd-epic-bbox_first_frame_eval
 predict_with_generate: true

@@ -716,12 +716,86 @@
     "folder": "python"
   },
 
-  "hd-epic-bbox": {
-  "file_name": "/data/LLAMA-factory/hd_epic_debug.json",
+  "hd-epic-bbox_train": {
+  "file_name": "/home/blank/data/LLAMA-factory/hd_epic_train.json",
   "formatting": "sharegpt",
   "columns": {
     "messages": "messages",
     "videos": "videos"
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+"hd-epic-bbox_eval": {
+  "file_name": "/home/blank/data/LLAMA-factory/hd_epic_eval.json",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "videos": "videos"
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+"hd-epic-bbox_first_frame_train": {
+  "file_name": "/home/blank/data/LLAMA-factory/hd_epic_first_frame_train.json",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "videos": "videos",
+    "images": "images"
+
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+"hd-epic-bbox_first_frame_eval": {
+  "file_name": "/home/blank/data/LLAMA-factory/hd_epic_first_frame_eval.json",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "videos": "videos",
+    "images": "images"
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+"hd-epic-detection_train": {
+  "file_name": "/home/blank/data/LLAMA-factory/hd_epic_detection_train.json",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "images": "images"
+
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+"hd-epic-detection_eval": {
+  "file_name": "/home/blank/data/LLAMA-factory/hd_epic_detection_eval.json",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "images": "images"
   },
   "tags": {
     "role_tag": "role",

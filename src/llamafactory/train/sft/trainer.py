@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import json
 import math
 import os
@@ -225,7 +226,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         #     # tpu-comment: Logging debug metrics for PyTorch/XLA (compile, execute times, ops, etc.)
         #     xm.master_print(met.metrics_report())
 
-        self.latest_predictions = output.predictions
+        self.latest_predictions = output.predictions.copy()
         
         self.control = self.callback_handler.on_evaluate(self.args, self.state, self.control, output.metrics)
 
@@ -267,6 +268,32 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         decoded_preds = self.processing_class.batch_decode(preds, skip_special_tokens=skip_special_tokens)
         decoded_labels = self.processing_class.batch_decode(labels, skip_special_tokens=skip_special_tokens)
 
+
+
+        images = dataset["images"]
+        videos = dataset["videos"]
+
         with open(output_prediction_file, "w", encoding="utf-8") as f:
-            for text, pred, label in zip(decoded_inputs, decoded_preds, decoded_labels):
-                f.write(json.dumps({"prompt": text, "predict": pred, "label": label}, ensure_ascii=False) + "\n")
+            for text, pred, label, image, video in zip(decoded_inputs, decoded_preds, decoded_labels, images, videos):
+                f.write(
+                    json.dumps(
+                        {
+                            "prompt": text,
+                            "predict": pred,
+                            "label": label,
+                            "image": image,
+                            "video": video,
+                        },
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                )
+
+        # with open(output_prediction_file, "w", encoding="utf-8") as f:
+        #     for text, pred, label, image in zip(decoded_inputs, decoded_preds, decoded_labels, images):
+        #         f.write(json.dumps({"prompt": text, "predict": pred, "label": label, "image": image}, ensure_ascii=False) + "\n")
+
+        
+        # with open(output_prediction_file, "w", encoding="utf-8") as f:
+        #     for text, pred, label in zip(decoded_inputs, decoded_preds, decoded_labels):
+        #         f.write(json.dumps({"prompt": text, "predict": pred, "label": label}, ensure_ascii=False) + "\n")
