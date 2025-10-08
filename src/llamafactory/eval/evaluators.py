@@ -9,6 +9,9 @@ from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from torchmetrics.detection.iou import IntersectionOverUnion
 from typing import List, Dict, Any, Union, Optional, Tuple
 
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+from sentence_transformers import SentenceTransformer, util
+
 
 class BaseEvaluator:
     """Base evaluator class that defines the common interface."""
@@ -209,6 +212,146 @@ class BoundingBoxEvaluator(BaseEvaluator):
         result.update(iou_result)
         
         return {k: v.item() for k, v in result.items()}
+
+
+class LabelEvaluator(BaseEvaluator):
+    """Evaluator for bounding box predictions."""
+    
+    def __init__(
+        self, 
+        ground_truth_file: Optional[str] = None, 
+        ground_truths: Optional[List[Dict[str, Any]]] = None,
+        name: Optional[str] = None,
+        model_name='all-MiniLM-L6-v2',
+        similarity_threshold=0.8
+    ):
+        """
+        Initialize the bounding box evaluator.
+        
+        Args:
+            ground_truth_file: Path to ground truth file (one JSON per line)
+            ground_truths: Ground truth data (alternative to file)
+            name: Name for this evaluator
+        """
+        super().__init__(name=name or "LabelMAP")
+        self.ground_truth_file = ground_truth_file
+        self.ground_truths_labels = ground_truths
+
+        self.model = SentenceTransformer(model_name)
+        self.threshold = similarity_threshold
+        self.load_data()
+
+    
+    def load_data(self):
+        """Load ground truth data if not provided directly."""
+        if self.ground_truths_labels is None and self.ground_truth_file:
+            with open(self.ground_truth_file, 'r') as f:
+                self.ground_truths_labels = [json.loads(line) for line in f]
+        
+        #Parse gt boxes from ground truths
+        parsed = []
+        for gt in self.ground_truths_labels:
+            labels = self.parse_labels_from_text(gt)
+            parsed.append(labels)
+        self.ground_truths_labels = parsed
+        
+            
+    
+    @classmethod
+    def parse_labels_from_text(self, text: str) -> List[List[float]]:
+        """
+        Parse bounding box coordinates from prediction text Qwen Format.
+        Expected format: "'```json\n[\n\t{"label": "orange", "bbox_2d": [68, 102, 97, 131]}\n]\n```'
+        
+        Args:
+            text: String containing prediction
+            
+        Returns:
+            List of bounding boxes as [x1, y1, x2, y2]
+        """
+        labels = []
+    
+        #find everythin between ``` json and ```, allwoing newlines
+        pattern = r'```json\s*([\s\S]*?)```'
+        matches = re.findall(pattern, text)
+        json_str = matches[0] if matches else None
+
+        data = json.loads(json_str)
+        
+            # Initialize with empty box
+        for item in data:
+            if "label" in item:
+                label = item["label"]
+                label = LabelEvaluator.process_label(label)
+
+                label = self.process_label(label)
+                labels.append()
+ 
+        return labels
+    
+    @classmethod
+    def process_label(self, label : str) -> str:        
+        label = label.lower().strip()
+        label = re.sub(r'[^\w\s]', '', label)  # remove punctuation/emojis
+        label = re.sub(r'\s+', ' ', label)     # normalize whitespace
+        return label
+
+    
+    def evaluate(self, predictions: List[Union[str, Dict[str, Any]]]) -> Dict[str, float]:
+        """
+        Evaluate bounding box predictions against ground truth.
+        
+        Args:
+            predictions: List of prediction strings or dicts with 'text' key
+            
+        Returns:
+            Dictionary with MAP metrics
+        """
+        # Load ground truth data if needed
+        
+        if not self.ground_truths_labels:
+            raise ValueError("No ground truth data available. Provide either ground_truths or ground_truth_file.")
+        
+        # Ensure we have matching number of predictions and ground truths
+        if len(predictions) != len(self.ground_truths_labels):
+            raise ValueError(f"Number of predictions ({len(predictions)}) doesn't match ground truths ({len(self.ground_truths_labels)})")
+        
+
+
+        results = list()
+        for pred, target in zip(predictions, self.ground_truths_labels):
+
+            pred_text = self.extract_text(pred)            
+            pred_label = self.parse_labels_from_text(pred_text)[0] if isinstance(pred_text, str) else ""
+
+
+            pred_label = self.process_label(pred_label)
+
+            true_emb = self.model.encode(target, convert_to_tensor=True, normalize_embeddings=True)
+            pred_emb = self.model.encode(pred_label, convert_to_tensor=True, normalize_embeddings=True)
+
+
+
+            # Compute cosine similarity
+            sim = float(util.cos_sim(true_emb, pred_emb))
+
+            correct = sim >= self.threshold
+            results.append(int(correct))
+            
+        accuracy = np.mean(results)
+        
+        y_true = np.ones(len(results))
+        y_pred = np.array(results)  
+
+        p, r, f, _ = precision_recall_fscore_support(y_true, y_pred, average='binary', zero_division=0)
+
+        return {
+            'accuracy': accuracy,
+            'precision': p,
+            'recall': r,
+            'f1_score': f
+        }
+
 
 
 class PointEvaluator(BaseEvaluator):
