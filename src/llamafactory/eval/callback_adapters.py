@@ -3,6 +3,7 @@ import wandb
 from transformers import TrainerCallback
 from transformers.integrations import WandbCallback
 from typing import Optional, List, Dict, Any
+import logging
 
 
 def decode_predictions(tokenizer, predictions):
@@ -48,11 +49,15 @@ class EvaluatorCallback(TrainerCallback):
         if self.trainer.latest_predictions is not None:
             predictions = self.trainer.latest_predictions
             predictions[predictions == -100] = self.tokenizer.pad_token_id
+            predictions = predictions[:len(self.val_dataset)]
+            logging.info("Predictions shape:", predictions.shape)
             pred_texts = self.tokenizer.batch_decode(
                 predictions, skip_special_tokens=True
             )
         else:
             predictions = self.trainer.predict(self.val_dataset)
+            predictions = predictions[:len(self.val_dataset)]
+            logging.info("Predictions shape:", predictions.shape)
             pred_texts = decode_predictions(self.tokenizer, predictions)
         
         # Run evaluation

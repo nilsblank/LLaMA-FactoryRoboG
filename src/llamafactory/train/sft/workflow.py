@@ -132,9 +132,9 @@ def run_sft(
                 )
                 # Training
                 # if training_args.do_train:
-                # metrics = trainer.evaluate(metric_key_prefix="eval", **gen_kwargs)
-                # trainer.log_metrics("eval", metrics)
-                # trainer.save_metrics("eval", metrics)
+                metrics = trainer.evaluate(metric_key_prefix="eval", **gen_kwargs)
+                trainer.log_metrics("eval", metrics)
+                trainer.save_metrics("eval", metrics)
     if training_args.do_train:
         train_result = trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
         trainer.save_model()
