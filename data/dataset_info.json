@@ -776,6 +776,235 @@
     "assistant_tag": "assistant"
   }
 },
+
+"roboG_stagepoc_temporal_grounding_box_qwen_train": {
+  "file_name": "/home/hk-project-sustainebot/bm3844/datasets/datasets/robogrounder/roboG_stagepoc_temporal_grounding_box_qwen_train.jsonl",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "videos": "videos",
+    "images": "images"
+
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+"roboG_stagepoc_temporal_grounding_box_qwen_eval": {
+  "file_name": "/home/hk-project-sustainebot/bm3844/datasets/datasets/robogrounder/roboG_stagepoc_temporal_grounding_box_qwen_eval.jsonl",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "videos": "videos",
+    "images": "images"
+
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+
+"roboG_stagepoc_ablation_two_frames_train": {
+  "file_name": "/home/hk-project-sustainebot/bm3844/datasets/datasets/robogrounder/roboG_stagepoc_ablation_two_frames_train.jsonl",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "videos": "videos",
+    "images": "images"
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+"roboG_stagepoc_ablation_two_frames_eval": {
+  "file_name": "/home/hk-project-sustainebot/bm3844/datasets/datasets/robogrounder/roboG_stagepoc_ablation_two_frames_eval.jsonl",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "videos": "videos",
+    "images": "images"
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+
+
+"roboG_stagepoc_temporal_grounding_no_box_train": {
+  "file_name": "/home/hk-project-sustainebot/bm3844/datasets/datasets/robogrounder/roboG_stagepoc_temporal_grounding_no_box_train.jsonl",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "videos": "videos",
+    "images": "images"
+
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+"roboG_stagepoc_temporal_grounding_no_box_eval": {
+  "file_name": "/home/hk-project-sustainebot/bm3844/datasets/datasets/robogrounder/roboG_stagepoc_temporal_grounding_no_box_eval.jsonl",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "videos": "videos",
+    "images": "images"
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+
+"roboG_stagepoc_temporal_grounding_box_train": {
+  "file_name": "/home/hk-project-sustainebot/bm3844/datasets/datasets/robogrounder/roboG_stagepoc_temporal_grounding_box_train.jsonl",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "videos": "videos",
+    "images": "images"
+
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+"roboG_stagepoc_temporal_grounding_box_eval": {
+  "file_name": "/home/hk-project-sustainebot/bm3844/datasets/datasets/robogrounder/roboG_stagepoc_temporal_grounding_box_eval.jsonl",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "videos": "videos",
+    "images": "images"
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+
+
+"roboG_stagepoc_temporal_grounding_object_first_eval": {
+  "file_name": "/home/hk-project-sustainebot/bm3844/datasets/datasets/robogrounder/roboG_stagepoc_temporal_grounding_object_first_eval.jsonl",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "videos": "videos",
+    "images": "images"
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+
+"roboG_stagepoc_temporal_grounding_object_first_train": {
+  "file_name": "/home/hk-project-sustainebot/bm3844/datasets/datasets/robogrounder/roboG_stagepoc_temporal_grounding_object_first_train.jsonl",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "videos": "videos",
+    "images": "images"
+
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+
+
+"roboG_stagepoc_ablation_multi_frame_eval": {
+  "file_name": "/home/hk-project-sustainebot/bm3844/datasets/datasets/robogrounder/roboG_stagepoc_ablation_multi_frame_eval.jsonl",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "videos": "videos",
+    "images": "images"
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+
+"roboG_stagepoc_ablation_multi_frame_train": {
+  "file_name": "/home/hk-project-sustainebot/bm3844/datasets/datasets/robogrounder/roboG_stagepoc_ablation_multi_frame_train.jsonl",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "videos": "videos",
+    "images": "images"
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+
+
+"roboG_stagepoc_ablation_single_frame_train": {
+  "file_name": "/home/hk-project-sustainebot/bm3844/datasets/datasets/robogrounder/roboG_stagepoc_ablation_single_frame_train.jsonl",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "videos": "videos",
+    "images": "images"
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+"roboG_stagepoc_ablation_single_frame_eval": {
+  "file_name": "/home/hk-project-sustainebot/bm3844/datasets/datasets/robogrounder/roboG_stagepoc_ablation_single_frame_eval.jsonl",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages",
+    "videos": "videos",
+    "images": "images"
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant"
+  }
+},
+
 "hd-epic-bbox_first_frame_eval": {
   "file_name": "/home/blank/data/LLAMA-factory/hd_epic_first_frame_eval.json",
   "formatting": "sharegpt",
